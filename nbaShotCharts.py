@@ -178,9 +178,9 @@ def draw_court(ax=None, color='black', lw=2, outer_lines=False):
                     color=color)
 
     # Center Court
-    center_outer_arc = Arc((0, 395), 120, 120, theta1=180, theta2=0,
+    center_outer_arc = Arc((0, 422.5), 120, 120, theta1=180, theta2=0,
                            linewidth=lw, color=color)
-    center_inner_arc = Arc((0, 395), 40, 40, theta1=180, theta2=0,
+    center_inner_arc = Arc((0, 422.5), 40, 40, theta1=180, theta2=0,
                            linewidth=lw, color=color)
 
     # List of the court elements to be plotted onto the axes
@@ -191,7 +191,7 @@ def draw_court(ax=None, color='black', lw=2, outer_lines=False):
 
     if outer_lines:
         # Draw the half court line, baseline and side out bound lines
-        outer_lines = Rectangle((-250, -47.5), 500, 442.5, linewidth=lw,
+        outer_lines = Rectangle((-250, -47.5), 500, 470, linewidth=lw,
                                 color=color, fill=False)
         court_elements.append(outer_lines)
 
@@ -203,7 +203,7 @@ def draw_court(ax=None, color='black', lw=2, outer_lines=False):
 
 
 def shot_chart(x, y, title="", kind="scatter", color="b", cmap=None,
-               xlim=(-250, 250), ylim=(395, -47.5),
+               xlim=(-250, 250), ylim=(422.5, -47.5),
                court_color="black", outer_lines=False, court_lw=2,
                flip_court=False, kde_shade=True, hex_gridsize=None,
                ax=None, **kwargs):
@@ -260,11 +260,11 @@ def shot_chart(x, y, title="", kind="scatter", color="b", cmap=None,
 
 def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
                      marginals_type="both", cmap=None, joint_color="b",
-                     marginals_color="b", xlim=(-250, 250), ylim=(395, -47.5),
-                     joint_kde_shade=True, marginals_kde_shade=True,
-                     hex_gridsize=None, space=0, size=(12, 11),
-                     flip_court=False, joint_kws=None, marginal_kws=None,
-                     **kwargs):
+                     marginals_color="b", xlim=(-250, 250),
+                     ylim=(422.5, -47.5), joint_kde_shade=True,
+                     marginals_kde_shade=True, hex_gridsize=None, space=0,
+                     size=(12, 11), flip_court=False, joint_kws=None,
+                     marginal_kws=None, **kwargs):
     """
     Returns a JointGrid object containing the shot chart.
 
