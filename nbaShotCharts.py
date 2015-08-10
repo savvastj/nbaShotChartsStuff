@@ -18,7 +18,7 @@ class NoPlayerError(Exception):
         return repr(self.value)
 
 
-class Players:
+class Players(object):
     """
     Players containts a pandas DataFrame with all players that have shot chart
     data.
@@ -52,7 +52,7 @@ class Players:
         return player_id.values
 
 
-class Shots:
+class Shots(object):
     """
     Shots is a wrapper around the NBA stats API that can access the shot chart
     data and player image.
