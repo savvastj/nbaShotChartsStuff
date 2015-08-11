@@ -18,7 +18,7 @@ class NoPlayerError(Exception):
         return repr(self.value)
 
 
-class Players(object):
+class Players:
     """
     Players containts a pandas DataFrame with all players that have shot chart
     data.
@@ -52,7 +52,7 @@ class Players(object):
         return player_id.values
 
 
-class Shots(object):
+class Shots:
     """
     Shots is a wrapper around the NBA stats API that can access the shot chart
     data and player image.
@@ -126,7 +126,7 @@ class Shots(object):
         return urllib.request.urlretrieve(url, img_file)[0]
 
 
-def draw_court(ax=None, color='black', lw=2, outer_lines=False):
+def draw_court(ax=None, color='gray', lw=1, outer_lines=False):
     """
     Returns an axes with a basketball court drawn onto to it.
 
@@ -204,7 +204,7 @@ def draw_court(ax=None, color='black', lw=2, outer_lines=False):
 
 def shot_chart(x, y, title="", kind="scatter", color="b", cmap=None,
                xlim=(-250, 250), ylim=(422.5, -47.5),
-               court_color="black", outer_lines=False, court_lw=2,
+               court_color="gray", outer_lines=False, court_lw=1,
                flip_court=False, kde_shade=True, hex_gridsize=None,
                ax=None, **kwargs):
     """
@@ -263,7 +263,8 @@ def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
                      marginals_color="b", xlim=(-250, 250),
                      ylim=(422.5, -47.5), joint_kde_shade=True,
                      marginals_kde_shade=True, hex_gridsize=None, space=0,
-                     size=(12, 11), flip_court=False, joint_kws=None,
+                     size=(12, 11), court_color="gray", outer_lines=False,
+                     court_lw=1, flip_court=False, joint_kws=None,
                      marginal_kws=None, **kwargs):
     """
     Returns a JointGrid object containing the shot chart.
@@ -337,10 +338,10 @@ def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
     # Set the size of the joint shot chart
     grid.fig.set_size_inches(size)
 
-    # Extract the the first axes, which is the main plot of the
-    # joint shot chart, and draw the court onto it
-    ax = grid.fig.get_axes()[0]
-    draw_court(ax)
+    # A joint plot has 3 Axes, the first one called ax_joint
+    # is the one we want to draw our court onto and adjust some other settings
+    ax = joint_shot_chart.ax_joint
+    draw_court(ax, color=court_color, lw=court_lw, outer_lines=outer_lines)
 
     # Get rid of the axis labels
     grid.set_axis_labels(xlabel="", ylabel="")
