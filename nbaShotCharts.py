@@ -1,6 +1,7 @@
 import requests
 import urllib.request
 import numpy as np
+from scipy.stats import binned_statistic_2d
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
@@ -124,6 +125,12 @@ class Shots:
             str(self.player_id) + ".png"
         img_file = str(self.player_id) + ".png"
         return urllib.request.urlretrieve(url, img_file)[0]
+
+    def get_league_avg(self):
+        """Returns the league average shooting stats for all FGA in each zone"""
+        shots = self.response.json()['resultSets'][1]['rowSet']
+        headers = self.response.json()['resultSets'][1]['headers']
+        return pd.DataFrame(shots, columns=headers)
 
 
 def draw_court(ax=None, color='gray', lw=1, outer_lines=False):
@@ -338,9 +345,9 @@ def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
     # Set the size of the joint shot chart
     grid.fig.set_size_inches(size)
 
-    # A joint plot has 3 Axes, the first one called ax_joint
-    # is the one we want to draw our court onto and adjust some other settings
-    ax = joint_shot_chart.ax_joint
+    # Extract the the first axes, which is the main plot of the
+    # joint shot chart, and draw the court onto it
+    ax = grid.fig.get_axes()[0]
     draw_court(ax, color=court_color, lw=court_lw, outer_lines=outer_lines)
 
     # Get rid of the axis labels
@@ -351,3 +358,48 @@ def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
     ax.set_title(title, y=1.2, fontsize=18)
 
     return grid
+
+
+def heatmap_fgp(x, y, z, bins=20, title="", cmap=plt.cm.YlOrRd,
+                xlim=(-250, 250), ylim=(422.5, -47.5),
+                facecolor='lightgray', facecolor_alpha=0.4,
+                court_color="black", outer_lines=False, court_lw=0.5,
+                flip_court=False, ax=None, **kwargs):
+
+    """
+    Returns an AxesImage object that contains a heatmap of the FG%
+
+    TODO: Explain parameters
+    """
+
+    # Bin the FGA (x, y) and Calculcate the mean number of times shot (z) was
+    # made withing each bin
+    # mean is the calculated FG percentage for each bin
+    mean, xedges, yedges, binnumber = binned_statistic_2d(x=x, y=y,
+                                                          values=z,
+                                                          statistic='mean',
+                                                          bins=bins)
+
+    if ax is None:
+        ax = plt.gca()
+
+    if not flip_court:
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+    else:
+        ax.set_xlim(xlim[::-1])
+        ax.set_ylim(ylim[::-1])
+
+    ax.tick_params(labelbottom="off", labelleft="off")
+    ax.set_title(title, fontsize=18)
+
+    ax.patch.set_facecolor(facecolor)
+    ax.patch.set_alpha(0.4)
+
+    draw_court(ax, color=court_color, lw=court_lw, outer_lines=outer_lines)
+
+    heatmap = ax.imshow(mean.T, origin='lower', extent=[xedges[0], xedges[-1],
+                        yedges[0], yedges[-1]], interpolation='nearest',
+                        cmap=plt.cm.YlOrRd)
+
+    return heatmap
