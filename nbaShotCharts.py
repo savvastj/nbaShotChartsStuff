@@ -6,6 +6,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
 import seaborn as sns
+from bokeh.plotting import figure, ColumnDataSource
+from math import pi
+
 
 sns.set_style('white')
 sns.set_color_codes()
@@ -265,7 +268,7 @@ def shot_chart(x, y, title="", kind="scatter", color="b", cmap=None,
     return ax
 
 
-def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
+def shot_chart_jointgrid(x, y, data=None, title="", joint_type="scatter",
                      marginals_type="both", cmap=None, joint_color="b",
                      marginals_color="b", xlim=(-250, 250),
                      ylim=(422.5, -47.5), joint_kde_shade=True,
@@ -306,7 +309,7 @@ def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
         grid = grid.plot_joint(plt.scatter, color=joint_color, **joint_kws)
 
     elif joint_type == "kde":
-        grid = grid.plot_joint(sns.kdeplot, color=joint_color,
+        grid = grid.plot_joint(sns.kdeplot, cmap=cmap,
                                shade=joint_kde_shade, **joint_kws)
 
     elif joint_type == "hex":
@@ -359,6 +362,51 @@ def joint_shot_chart(x, y, data=None, title="", joint_type="scatter",
 
     return grid
 
+def shot_chart_jointplot(x, y, data=None, title="", kind="scatter", color="b", 
+                         cmap=None, xlim=(-250, 250), ylim=(422.5, -47.5),
+                         space=0, court_color="gray", outer_lines=False,
+                         court_lw=1, flip_court=False, 
+                         set_size_inches=(12, 11), **kwargs):
+    """
+    Returns a seaborn JointGrid using sns.jointplot
+
+    TODO: Better documentation
+    """
+
+    # If a colormap is not provided, then it is based off of the color
+    if cmap is None:
+        cmap = sns.light_palette(color, as_cmap=True)
+
+    plot = sns.jointplot(x, y, data=None, stat_func=None, kind=kind, space=0, 
+                         color=color, cmap=cmap, **kwargs)
+
+    plot.fig.set_size_inches(set_size_inches)
+
+
+    # A joint plot has 3 Axes, the first one called ax_joint 
+    # is the one we want to draw our court onto and adjust some other settings
+    ax = plot.ax_joint
+
+    if not flip_court:
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+    else:
+        ax.set_xlim(xlim[::-1])
+        ax.set_ylim(ylim[::-1])
+
+    draw_court(ax, color=court_color, lw=court_lw, outer_lines=outer_lines)
+
+    # Get rid of axis labels and tick marks
+    ax.set_xlabel('')
+    ax.set_ylabel('')
+    ax.tick_params(labelbottom='off', labelleft='off')
+
+    # Add a title
+    ax.set_title(title, y=1.2, fontsize=18)
+
+    return plot
+
+
 
 def heatmap_fgp(x, y, z, bins=20, title="", cmap=plt.cm.YlOrRd,
                 xlim=(-250, 250), ylim=(422.5, -47.5),
@@ -372,8 +420,8 @@ def heatmap_fgp(x, y, z, bins=20, title="", cmap=plt.cm.YlOrRd,
     TODO: Explain parameters
     """
 
-    # Bin the FGA (x, y) and Calculcate the mean number of times shot (z) was
-    # made withing each bin
+    # Bin the FGA (x, y) and Calculcate the mean number of times shot was
+    # made (z) within each bin
     # mean is the calculated FG percentage for each bin
     mean, xedges, yedges, binnumber = binned_statistic_2d(x=x, y=y,
                                                           values=z,
@@ -394,7 +442,7 @@ def heatmap_fgp(x, y, z, bins=20, title="", cmap=plt.cm.YlOrRd,
     ax.set_title(title, fontsize=18)
 
     ax.patch.set_facecolor(facecolor)
-    ax.patch.set_alpha(0.4)
+    ax.patch.set_alpha(facecolor_alpha)
 
     draw_court(ax, color=court_color, lw=court_lw, outer_lines=outer_lines)
 
@@ -403,3 +451,93 @@ def heatmap_fgp(x, y, z, bins=20, title="", cmap=plt.cm.YlOrRd,
                         cmap=plt.cm.YlOrRd)
 
     return heatmap
+
+
+# Bokeh Shot Chart
+def bokeh_draw_court(figure, line_width=1, line_color='gray'):
+    """Returns a figure with the basketball court lines drawn onto it"""
+
+    # hoop
+    figure.circle(x=0, y=0, radius=7.5, fill_alpha=0,
+             line_color=line_color, line_width=line_width)
+
+    # backboard
+    figure.line(x=range(-30,31), y=-7.5, line_color=line_color)
+
+    # The paint
+    # outerbox
+    figure.rect(x=0, y=47.5, width=160, height=190,fill_alpha=0, 
+              line_color=line_color, line_width=line_width)
+    # innerbox
+    # left inner box line
+    figure.line(x=-60, y=np.arange(-47.5, 143.5), line_color=line_color,
+              line_width=line_width)
+    # right inner box line
+    figure.line(x=60, y=np.arange(-47.5, 143.5), line_color=line_color,
+              line_width=line_width)
+
+    # plot.rect(x=0, y=47.5, width=120, height=190, fill_alpha=0,
+    #           line_color=line_color, line_width=line_width)
+
+    # Restricted Zone
+    figure.arc(x=0, y=0, radius=40, start_angle=pi, end_angle=0,
+             line_color=line_color, line_width=line_width)
+
+    # top free throw arc
+    figure.arc(x=0, y=142.5, radius=60, start_angle=pi, end_angle=0,
+             line_color=line_color)
+
+    # bottome free throw arc
+    figure.arc(x=0, y=142.5, radius=60, start_angle=0, end_angle=pi,
+             line_color=line_color, line_dash="dashed")
+
+    # Three point line
+    # corner three point lines
+    figure.line(x=-220, y=np.arange(-47.5, 92.5), line_color=line_color,
+              line_width=line_width)
+    figure.line(x=220, y=np.arange(-47.5, 92.5), line_color=line_color,
+              line_width=line_width)
+    # # three point arc
+    figure.arc(x=0, y=0, radius=237.5, start_angle=3.528, end_angle=-0.3863,
+             line_color=line_color, line_width=line_width)
+
+    # add center court
+    # outer center arc
+    figure.arc(x=0, y=422.5, radius=60, start_angle=0, end_angle=pi,
+             line_color=line_color, line_width=line_width)
+    # inner center arct
+    figure.arc(x=0, y=422.5, radius=20, start_angle=0, end_angle=pi,
+             line_color=line_color, line_width=line_width)
+
+
+    # outer lines, consistting of half court lines and out of bounds
+    # lines
+    figure.rect(x=0, y=187.5, width=500, height=470, fill_alpha=0, 
+              line_color=line_color, line_width=line_width)
+    
+    return figure
+
+
+def bokeh_shot_chart(source, x="LOC_X", y="LOC_Y", fill_color="#1f77b4",
+                     fill_alpha=0.3, line_alpha=0.3, court_lw=1,
+                     court_line_color='gray'):
+    """
+    Returns a figure with both FGA and basketball court lines drawn onto it.
+
+    This function expects data to be a ColumnDataSource with the x and y values
+    named "LOC_X" and "LOC_Y".  Otherwise specify x and y.  
+    """
+
+    # source = ColumnDataSource(data)
+
+    fig = figure(width=700, height=658, x_range=[-250,250],
+                  y_range=[422.5, -47.5], min_border=0,
+                  x_axis_type=None, y_axis_type=None,
+                  outline_line_color="black")
+
+    fig.scatter(x, y, source=source, size=10, fill_alpha=0.3,
+                 line_alpha=0.3)
+
+    bokeh_draw_court(fig, line_color='gray')
+
+    return fig
