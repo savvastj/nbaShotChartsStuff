@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
 import seaborn as sns
-from bokeh.plotting import figure, ColumnDataSource
+from bokeh.plotting import figure
 from math import pi
 
 
